@@ -86,6 +86,12 @@ variable "aws_security_group" {
         protocol    = "tcp"
         source      = "0.0.0.0/0"
         description = "open https"
+      },
+      {
+        port        = 81
+        protocol    = "Custom tcp"
+        source      = "0.0.0.0/0"
+        description = "open http"
     }]
   }
 }

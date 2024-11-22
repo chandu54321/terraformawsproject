@@ -54,6 +54,9 @@ resource "aws_route_table_association" "for_private" {
   route_table_id = aws_route_table.private.id
   subnet_id      = aws_subnet.private_subnet[count.index].id
 }
+resource "aws_s3_bucket" "firstbucket" {
+  bucket = "mychandu-tf-test-bucket"
+}
 
 resource "aws_security_group" "sec1" {
   name        = var.aws_security_group.name
@@ -125,11 +128,22 @@ resource "aws_lb_target_group_attachment" "test" {
   target_id        = aws_instance.firstins.id
   port             = 80
 }
-resource "aws_lb_target_group_attachment" "test1" {
-  target_group_arn = aws_lb_target_group.test.arn
+resource "aws_lb_target_group" "test2" {
+  name     = "tf-example-lb-tg1"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.first.id
+  health_check {
+    path = "/"
+    port = "traffic-port"
+  }
+}
+resource "aws_lb_target_group_attachment" "tst1" {
+  target_group_arn = aws_lb_target_group.test2.arn
   target_id        = aws_instance.secondins.id
   port             = 80
 }
+
 resource "aws_lb_listener" "front_end" {
   load_balancer_arn = aws_lb.firstlb.arn
   port              = "80"
@@ -139,5 +153,45 @@ resource "aws_lb_listener" "front_end" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.test.arn
+  }
+}
+resource "aws_lb_listener_rule" "tenant1_rule" {
+  listener_arn = aws_lb_listener.front_end.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.test.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/woody/*"]
+    }
+  }
+}
+resource "aws_lb_listener" "front_end1" {
+  load_balancer_arn = aws_lb.firstlb.arn
+  port              = "81"
+  protocol          = "HTTP"
+
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.test2.arn
+  }
+
+}
+resource "aws_lb_listener_rule" "tenant2_rule" {
+  listener_arn = aws_lb_listener.front_end1.arn
+  priority     = 101
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.test2.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/repairs/*"]
+    }
   }
 }
