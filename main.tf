@@ -54,6 +54,31 @@ resource "aws_route_table_association" "for_private" {
   route_table_id = aws_route_table.private.id
   subnet_id      = aws_subnet.private_subnet[count.index].id
 }
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.first.id
+  service_name      = "com.amazonaws.ap-south-1.s3"
+  vpc_endpoint_type = "Gateway"
+
+
+  policy = <<POLICY
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": "*"
+        }
+    ]
+}
+POLICY
+
+  tags = {
+    Name = "S3GatewayEndpoint"
+  }
+}
+
 resource "aws_s3_bucket" "firstbucket" {
   bucket = "mychandu-tf-test-bucket"
 }
@@ -84,7 +109,7 @@ resource "aws_instance" "firstins" {
   vpc_security_group_ids      = [aws_security_group.sec1.id]
   subnet_id                   = aws_subnet.public_subnet[0].id
   associate_public_ip_address = true
-  key_name                    = "if_resa"
+  key_name                    = "id_rsapub"
   user_data                   = file("woody.sh")
   tags = {
     name = "first"
@@ -97,7 +122,7 @@ resource "aws_instance" "secondins" {
   vpc_security_group_ids      = [aws_security_group.sec1.id]
   subnet_id                   = aws_subnet.public_subnet[1].id
   associate_public_ip_address = true
-  key_name                    = "if_resa"
+  key_name                    = "id_rsapub"
   user_data                   = file("repairs.sh")
   tags = {
     name = "second"
