@@ -1,0 +1,27 @@
+pool:
+  vmImage: 'ubuntu-latest'
+trigger:
+- main 
+stages:
+  - stage: Deploy
+    jobs:
+      - job: TerraformJob
+        steps:
+          - bash: |
+              terraform init
+            displayName: 'Terraform Init'
+          - bash: |
+              terraform fmt
+            displayName: 'Terraform fmt'
+          - bash: |
+              terraform validate
+            displayName: 'Terraform validate'    
+          - bash: |
+              terraform plan 
+            displayName: 'Terraform Plan'
+          - bash: |
+              terraform apply -auto-approve
+            displayName: 'Terraform Apply'
+            env:
+              AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+              AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
