@@ -220,3 +220,31 @@ resource "aws_lb_listener_rule" "tenant2_rule" {
     }
   }
 }
+
+resource "aws_sns_topic" "cpu_alerts" {
+  name = "cpu-alerts"
+}
+
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.cpu_alerts.arn
+  protocol  = "email"
+  endpoint  = "kasinenichandu@gmail.com" # Your email address
+}
+
+resource "aws_cloudwatch_metric_alarm" "high_cpu_utilization" {
+  alarm_name          = "High CPU Utilization Alarm"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name        = "CPUUtilization"
+  namespace          = "AWS/EC2"
+  period             = 300 # Check every 5 minutes
+  statistic          = "Average"
+  threshold          = 70.0
+  alarm_description  = "This alarm triggers when CPU utilization exceeds 70%."
+
+  dimensions = {
+    InstanceId = aws_instance.firstins.id  # Replace with your actual EC2 instance ID
+  }
+
+  alarm_actions = [aws_sns_topic.cpu_alerts.arn]
+}
